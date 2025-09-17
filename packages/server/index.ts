@@ -1,15 +1,10 @@
 import express from "express";
 import type { Request, Response } from "express";
 import z from "zod";
-import OpenAI from "openai";
 import dotenv from "dotenv";
+import { chatService } from "./services/chat.service";
 
 dotenv.config();
-
-const client = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 const app = express();
 app.use(express.json());
@@ -40,14 +35,10 @@ app.post("/api/chat", async (req: Request, res: Response) => {
 
   try {
     const { messages } = req.body;
-    const completion = await client.chat.completions.create({
-      model: "mistralai/devstral-small-2505:free",
-      messages: messages,
-      temperature: 0.3,
-    });
-    res.json({ message: completion.choices[0]?.message });
+    const response = await chatService.sendMessage(messages);
+    res.json({ message: response.message });
   } catch (error) {
-    res.status(500).json({message: 'something failed!'})
+    res.status(500).json({ message: "something failed!" });
   }
 });
 
