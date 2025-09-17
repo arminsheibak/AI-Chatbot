@@ -1,6 +1,11 @@
+import Chat from "./components/Chat";
 
 function App() {
-  return <p className="text-red-500">Hello world</p>
+  return (
+    <div className="p-4">
+      <Chat />
+    </div>
+  );
 }
 
-export default App
+export default App;
