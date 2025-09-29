@@ -19,7 +19,7 @@ const Chat = () => {
   const { conversationId } = useParams();
   const [isBotTyping, setIsBotTyping] = useState(false);
   const { register, handleSubmit, reset, formState } = useForm<FormData>();
-  const formRef = useRef<HTMLFormElement | null>(null)
+  const lastMassage = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
   const { getConversation, conversations, setCurrentConversation, addMessage } =
     useChatStore();
@@ -45,14 +45,14 @@ const Chat = () => {
   ]);
 
   useEffect(() => {
-    if (formRef)
-      formRef.current?.scrollIntoView({behavior: 'smooth'})
-  }, [conversation?.messages])
+    if (lastMassage)
+      lastMassage.current?.scrollIntoView({ behavior: "smooth" });
+  }, [conversation?.messages]);
 
   const onSubmit = async ({ prompt }: FormData) => {
     addMessage(conversationId!, { role: "user", content: prompt });
     setIsBotTyping(true);
-    reset();
+    reset({ prompt: ''});
     const prevMessages =
       conversation?.messages.slice(conversation.messages.length - 5) || [];
     const context = [...prevMessages, { role: "user", content: prompt }];
@@ -63,18 +63,21 @@ const Chat = () => {
     setIsBotTyping(false);
   };
   return (
-    <div>
-      <div className="flex flex-col gap-4 mb-10">
+    <div className="flex flex-col h-full">
+      <div className="flex flex-col overflow-y-auto scrollbar-hide flex-1 gap-4 mb-10">
         {conversation?.messages &&
           conversation.messages.length > 0 &&
           conversation?.messages.map((message, index) => {
             return (
-              <p
+              <div
+                ref={
+                  index == conversation.messages.length - 1 ? lastMassage : null
+                }
                 onCopy={(e) => {
                   const selection = window.getSelection()?.toString()?.trim();
                   if (selection) {
                     e.preventDefault();
-                    e.clipboardData.setData('text/plain', selection)
+                    e.clipboardData.setData("text/plain", selection);
                   }
                 }}
                 className={`px-3 py-1 rounded-xl ${
@@ -85,11 +88,11 @@ const Chat = () => {
                 key={index}
               >
                 <ReactMarkdown>{message.content}</ReactMarkdown>
-              </p>
+              </div>
             );
           })}
         {isBotTyping && (
-          <div className="flex self-start w-fit gap-1 px-3 py-3 bg-gray-200 rounded-xl" >
+          <div className="flex self-start w-fit gap-1 px-3 py-3 bg-gray-200 rounded-xl">
             <div className="w-2 h-2 rounded-full bg-gray-800 animate-pulse "></div>
             <div className="w-2 h-2 rounded-full bg-gray-800 animate-pulse [animation-delay:0.2s] "></div>
             <div className="w-2 h-2 rounded-full bg-gray-800 animate-pulse [animation-delay:0.4s] "></div>
@@ -97,7 +100,6 @@ const Chat = () => {
         )}
       </div>
       <form
-        ref={formRef}
         onSubmit={handleSubmit(onSubmit)}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey) {
@@ -108,6 +110,7 @@ const Chat = () => {
         className="flex border-2 rounded-3xl p-4 flex-col gap-2 items-end"
       >
         <textarea
+          autoFocus
           {...register("prompt", {
             required: true,
             validate: (data) => data.trim().length > 0,

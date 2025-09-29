@@ -29,7 +29,7 @@ function Layout() {
   }, [conversations, currentConversationId, addConversation, setCurrentConversation, navigate]);
 
   return (
-    <div className="p-4">
+    <div className="p-5 h-screen">
       <Outlet />
     </div>
   );

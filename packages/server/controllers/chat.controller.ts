@@ -28,6 +28,7 @@ export const chatController = {
       res.json({ message: response.message });
     } catch (error) {
       res.status(500).json({ message: "something failed!" });
+      console.log(error)
     }
   },
 };
