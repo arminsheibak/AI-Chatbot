@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import { useChatStore } from "@/store";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 interface FormData {
@@ -17,6 +17,7 @@ interface ChatResponse {
 
 const Chat = () => {
   const { conversationId } = useParams();
+  const [isBotTyping, setIsBotTyping] = useState(false);
   const { register, handleSubmit, reset, formState } = useForm<FormData>();
   const navigate = useNavigate();
   const { getConversation, conversations, setCurrentConversation, addMessage } =
@@ -44,13 +45,16 @@ const Chat = () => {
 
   const onSubmit = async ({ prompt }: FormData) => {
     addMessage(conversationId!, { role: "user", content: prompt });
+    setIsBotTyping(true);
     reset();
-    const prevMessages = conversation?.messages.slice(conversation.messages.length -5) || [];
+    const prevMessages =
+      conversation?.messages.slice(conversation.messages.length - 5) || [];
     const context = [...prevMessages, { role: "user", content: prompt }];
     const { data } = await axios.post<ChatResponse>("/api/chat", {
       messages: context,
     });
     addMessage(conversationId!, { role: "assistant", content: data.message });
+    setIsBotTyping(false);
   };
   return (
     <div>
@@ -71,6 +75,13 @@ const Chat = () => {
               </p>
             );
           })}
+        {isBotTyping && (
+          <div className="flex self-start w-fit gap-1 px-3 py-3 bg-gray-200 rounded-xl" >
+            <div className="w-2 h-2 rounded-full bg-gray-800 animate-pulse "></div>
+            <div className="w-2 h-2 rounded-full bg-gray-800 animate-pulse [animation-delay:0.2s] "></div>
+            <div className="w-2 h-2 rounded-full bg-gray-800 animate-pulse [animation-delay:0.4s] "></div>
+          </div>
+        )}
       </div>
       <form
         onSubmit={handleSubmit(onSubmit)}
