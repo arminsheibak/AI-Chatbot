@@ -2,20 +2,41 @@ import { FaArrowUp } from "react-icons/fa";
 import { Button } from "./ui/button";
 import { useForm } from "react-hook-form";
 import axios from "axios";
+import { useNavigate, useParams } from "react-router-dom";
+import { useChatStore } from "@/store";
+import { useEffect } from "react";
 
 interface FormData {
   prompt: string;
 }
 
 const Chat = () => {
+  const { conversationId } = useParams();
   const { register, handleSubmit, reset, formState } = useForm<FormData>();
+  const navigate = useNavigate()
+  const { getConversation, conversations,setCurrentConversation, addMessage } = useChatStore();
+  const conversation = conversationId ? getConversation(conversationId) : null;
+
+   useEffect(() => {
+    if (!conversationId) return;
+
+    if (!conversation) {
+      if (conversations.length > 0) {
+        const lastConv = conversations[conversations.length - 1];
+        navigate(`/chat/${lastConv.id}`, { replace: true });
+      }
+    } else {
+      setCurrentConversation(conversationId);
+    }
+  }, [conversationId, conversation, conversations, navigate, setCurrentConversation]);
 
   const onSubmit = async ({ prompt }: FormData) => {
+    addMessage(conversationId!, {role: 'user', content: prompt})
     reset();
     const { data } = await axios.post("/api/chat", {
       messages: [{ role: "user", content: prompt }],
     });
-    console.log(data);
+    addMessage(conversationId!, {role: 'assistant', content: data.message})
   };
   return (
     <form
