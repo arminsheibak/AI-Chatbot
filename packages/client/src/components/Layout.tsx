@@ -38,7 +38,7 @@ function Layout() {
   return (
     <>
       <Toaster />
-      <div className="p-5 h-screen">
+      <div className="p-5 h-screen max-w-3xl mx-auto">
         <Outlet />
       </div>
     </>
