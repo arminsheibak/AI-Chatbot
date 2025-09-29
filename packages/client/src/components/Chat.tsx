@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import { useChatStore } from "@/store";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 interface FormData {
@@ -19,6 +19,7 @@ const Chat = () => {
   const { conversationId } = useParams();
   const [isBotTyping, setIsBotTyping] = useState(false);
   const { register, handleSubmit, reset, formState } = useForm<FormData>();
+  const formRef = useRef<HTMLFormElement | null>(null)
   const navigate = useNavigate();
   const { getConversation, conversations, setCurrentConversation, addMessage } =
     useChatStore();
@@ -43,6 +44,11 @@ const Chat = () => {
     setCurrentConversation,
   ]);
 
+  useEffect(() => {
+    if (formRef)
+      formRef.current?.scrollIntoView({behavior: 'smooth'})
+  }, [conversation?.messages])
+
   const onSubmit = async ({ prompt }: FormData) => {
     addMessage(conversationId!, { role: "user", content: prompt });
     setIsBotTyping(true);
@@ -64,6 +70,13 @@ const Chat = () => {
           conversation?.messages.map((message, index) => {
             return (
               <p
+                onCopy={(e) => {
+                  const selection = window.getSelection()?.toString()?.trim();
+                  if (selection) {
+                    e.preventDefault();
+                    e.clipboardData.setData('text/plain', selection)
+                  }
+                }}
                 className={`px-3 py-1 rounded-xl ${
                   message.role == "user"
                     ? "bg-blue-600 text-white self-end"
@@ -84,6 +97,7 @@ const Chat = () => {
         )}
       </div>
       <form
+        ref={formRef}
         onSubmit={handleSubmit(onSubmit)}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey) {
