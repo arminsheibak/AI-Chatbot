@@ -5,19 +5,25 @@ import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import { useChatStore } from "@/store";
 import { useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 
 interface FormData {
   prompt: string;
 }
 
+interface ChatResponse {
+  message: string;
+}
+
 const Chat = () => {
   const { conversationId } = useParams();
   const { register, handleSubmit, reset, formState } = useForm<FormData>();
-  const navigate = useNavigate()
-  const { getConversation, conversations,setCurrentConversation, addMessage } = useChatStore();
+  const navigate = useNavigate();
+  const { getConversation, conversations, setCurrentConversation, addMessage } =
+    useChatStore();
   const conversation = conversationId ? getConversation(conversationId) : null;
 
-   useEffect(() => {
+  useEffect(() => {
     if (!conversationId) return;
 
     if (!conversation) {
@@ -28,44 +34,72 @@ const Chat = () => {
     } else {
       setCurrentConversation(conversationId);
     }
-  }, [conversationId, conversation, conversations, navigate, setCurrentConversation]);
+  }, [
+    conversationId,
+    conversation,
+    conversations,
+    navigate,
+    setCurrentConversation,
+  ]);
 
   const onSubmit = async ({ prompt }: FormData) => {
-    addMessage(conversationId!, {role: 'user', content: prompt})
+    addMessage(conversationId!, { role: "user", content: prompt });
     reset();
-    const { data } = await axios.post("/api/chat", {
-      messages: [{ role: "user", content: prompt }],
+    const prevMessages = conversation?.messages.slice(conversation.messages.length -5) || [];
+    const context = [...prevMessages, { role: "user", content: prompt }];
+    const { data } = await axios.post<ChatResponse>("/api/chat", {
+      messages: context,
     });
-    addMessage(conversationId!, {role: 'assistant', content: data.message})
+    addMessage(conversationId!, { role: "assistant", content: data.message });
   };
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          handleSubmit(onSubmit)();
-        }
-      }}
-      className="flex border-2 rounded-3xl p-4 flex-col gap-2 items-end"
-    >
-      <textarea
-        {...register("prompt", {
-          required: true,
-          validate: (data) => data.trim().length > 0,
-        })}
-        maxLength={1000}
-        placeholder="Ask anything"
-        className="w-full border-0 resize-none focus:outline-0"
-      />
-      <Button
-        disabled={!formState.isValid}
-        type="submit"
-        className="rounded-full w-9 h-9"
+    <div>
+      <div className="flex flex-col gap-4 mb-10">
+        {conversation?.messages &&
+          conversation.messages.length > 0 &&
+          conversation?.messages.map((message, index) => {
+            return (
+              <p
+                className={`px-3 py-1 rounded-xl ${
+                  message.role == "user"
+                    ? "bg-blue-600 text-white self-end"
+                    : "bg-gray-100 text-gray-900 self-start"
+                }`}
+                key={index}
+              >
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+              </p>
+            );
+          })}
+      </div>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleSubmit(onSubmit)();
+          }
+        }}
+        className="flex border-2 rounded-3xl p-4 flex-col gap-2 items-end"
       >
-        <FaArrowUp />
-      </Button>
-    </form>
+        <textarea
+          {...register("prompt", {
+            required: true,
+            validate: (data) => data.trim().length > 0,
+          })}
+          maxLength={1000}
+          placeholder="Ask anything"
+          className="w-full border-0 resize-none focus:outline-0"
+        />
+        <Button
+          disabled={!formState.isValid}
+          type="submit"
+          className="rounded-full w-9 h-9"
+        >
+          <FaArrowUp />
+        </Button>
+      </form>
+    </div>
   );
 };
 
