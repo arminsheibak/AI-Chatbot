@@ -1,5 +1,6 @@
 import { useChatStore } from "@/store";
 import { useEffect } from "react";
+import { Toaster } from "react-hot-toast";
 import { Outlet, useNavigate } from "react-router-dom";
 
 function Layout() {
@@ -26,12 +27,21 @@ function Layout() {
       setCurrentConversation(lastConv.id);
       navigate(`/chat/${lastConv.id}`, { replace: true });
     }
-  }, [conversations, currentConversationId, addConversation, setCurrentConversation, navigate]);
+  }, [
+    conversations,
+    currentConversationId,
+    addConversation,
+    setCurrentConversation,
+    navigate,
+  ]);
 
   return (
-    <div className="p-5 h-screen">
-      <Outlet />
-    </div>
+    <>
+      <Toaster />
+      <div className="p-5 h-screen">
+        <Outlet />
+      </div>
+    </>
   );
 }
 

@@ -5,6 +5,7 @@ import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import { useChatStore } from "@/store";
 import { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import ReactMarkdown from "react-markdown";
 
 interface FormData {
@@ -49,18 +50,27 @@ const Chat = () => {
       lastMassage.current?.scrollIntoView({ behavior: "smooth" });
   }, [conversation?.messages]);
 
-  const onSubmit = async ({ prompt }: FormData) => {
+  const onSubmit = ({ prompt }: FormData) => {
     addMessage(conversationId!, { role: "user", content: prompt });
     setIsBotTyping(true);
-    reset({ prompt: ''});
+    reset({ prompt: "" });
     const prevMessages =
       conversation?.messages.slice(conversation.messages.length - 5) || [];
     const context = [...prevMessages, { role: "user", content: prompt }];
-    const { data } = await axios.post<ChatResponse>("/api/chat", {
-      messages: context,
-    });
-    addMessage(conversationId!, { role: "assistant", content: data.message });
-    setIsBotTyping(false);
+    axios
+      .post<ChatResponse>("/api/chat", {
+        messages: context,
+      })
+      .then((res) => {
+        addMessage(conversationId!, {
+          role: "assistant",
+          content: res.data.message,
+        });
+      })
+      .catch(() => toast.error("Sorry. Rate limit reached!"))
+      .finally(() => {
+        return setIsBotTyping(false);
+      });
   };
   return (
     <div className="flex flex-col h-full">
