@@ -58,7 +58,7 @@ const Chat = () => {
       conversation?.messages.slice(conversation.messages.length - 5) || [];
     const context = [...prevMessages, { role: "user", content: prompt }];
     axios
-      .post<ChatResponse>("/api/chat", {
+      .post<ChatResponse>("https://ai-chatbot-29rz.onrender.com/api/chat", {
         messages: context,
       })
       .then((res) => {
