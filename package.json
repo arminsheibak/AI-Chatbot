@@ -11,5 +11,11 @@
   },
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "scripts": {
+    "dev": "bun run index.ts"
+  }
 }
